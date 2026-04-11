@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随心飞 - 没钱也能放肆玩！</title>
+    <!-- 优化 CDN 资源 -->
+    <script src="https://cdn.staticfile.org/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.staticfile.org/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.staticfile.org/babel-standalone/7.22.10/babel.min.js"></script>
+    <!-- Lucide 图标集 -->
+    <script src="https://unpkg.com/lucide@0.372.0/dist/umd/lucide.min.js"></script>
+    
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&display=swap');
+        .font-zhi-mang { font-family: 'Zhi Mang Xing', cursive; }
+        body { margin: 0; padding: 0; overflow-x: hidden; }
+        #root { min-height: 100vh; }
+        /* 加载动画样式 */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: #fff9f2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #fbd38d;
+            border-top: 5px solid #fb923c;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #fff9f2; }
+        ::-webkit-scrollbar-thumb { background: #fbbf24; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px; font-family: 'Zhi Mang Xing', cursive; font-size: 24px; color: #fb923c;">
+            灵感加载中...
+        </p>
+    </div>
+    <div id="root"></div>
+    <div id="error-display" style="display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(255,0,0,0.8); color:white; padding:10px; z-index:9999; font-family:monospace;"></div>
+
+    <script type="text/babel">
+        // 增强的错误捕获
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            document.getElementById('loading-overlay').style.display = 'none';
+            const display = document.getElementById('error-display');
+            display.style.display = 'block';
+            display.innerHTML = `<b>页面运行出错:</b><br/>${msg}<br/>请确保您的浏览器版本较新并处于联网状态。`;
+            console.error(error);
+            return false;
+        };
+
+        // Lucide 图标集 UMD 模式兼容处理
+        const LucideIcon = ({ name, ...props }) => {
+            const [IconComponent, setIconComponent] = React.useState(null);
+
+            React.useEffect(() => {
+                if (window.lucide) {
+                    // 获取图标名称对应的类名 (PascalCase)
+                    const iconName = name.charAt(0).toUpperCase() + name.slice(1);
+                    // 动态创建图标
+                    const icon = window.lucide.icons[iconName];
+                    if (icon) {
+                        // 在 UMD 模式下，我们手动将图标转换为 React 可用的 svg 字符串渲染
+                        // 或者更简单的方法是使用 lucide.createIcons
+                        setIconComponent(icon);
+                    }
+                }
+            }, [name]);
+
+            if (!IconComponent) return <span style={{display:'inline-block', width:'1em', height:'1em'}}></span>;
+            
+            // 简单模拟 Lucide React 组件
+            return (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={props.size || props.width || 24}
+                    height={props.size || props.height || 24}
+                    viewBox="0 0 24 24"
+                    fill={props.fill || "none"}
+                    stroke="currentColor"
+                    strokeWidth={props.strokeWidth || 2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={props.className}
+                    dangerouslySetInnerHTML={{ __html: IconComponent[2].map(tag => {
+                        const [tagName, attrs] = tag;
+                        const attrStr = Object.entries(attrs).map(([k, v]) => `${k}="${v}"`).join(' ');
+                        return `<${tagName} ${attrStr} />`;
+                    }).join('') }}
+                />
+            );
+        };
+
+        // 快捷定义图标组件
+        const Palmtree = (p) => <LucideIcon name="palmtree" {...p} />;
+        const PartyPopper = (p) => <LucideIcon name="partyPopper" {...p} />;
+        const Sparkles = (p) => <LucideIcon name="sparkles" {...p} />;
+        const Heart = (p) => <LucideIcon name="heart" {...p} />;
+        const Search = (p) => <LucideIcon name="search" {...p} />;
+        const Plane = (p) => <LucideIcon name="plane" {...p} />;
+        const Clock = (p) => <LucideIcon name="clock" {...p} />;
+        const ArrowRight = (p) => <LucideIcon name="arrowRight" {...p} />;
+        const Bell = (p) => <LucideIcon name="bell" {...p} />;
+        const X = (p) => <LucideIcon name="x" {...p} />;
+        const MapPin = (p) => <LucideIcon name="mapPin" {...p} />;
+        const Calendar = (p) => <LucideIcon name="calendar" {...p} />;
+        const ChevronRight = (p) => <LucideIcon name="chevronRight" {...p} />;
+        const MonitorPlay = (p) => <LucideIcon name="monitorPlay" {...p} />;
+
+        const { useState, useEffect } = React;
+
+        const MOCK_FLIGHTS = [
+          {
+            id: 1,
+            city: "大理",
+            quote: ["下关风，上关花，\n苍山雪，洱海月", "风花雪月，\n人间值得"],
+            handwrittenNote: "去大理，把时间浪费在洱海边。",
+            departDate: "2024-05-12",
+            departTime: "07:30",
+            returnDate: "2024-05-15",
+            returnTime: "21:15",
+            days: 4,
+            price: 388,
+            originalPrice: 1280,
+            isDirect: true,
+            transferInfo: "直飞 2h 45m",
+            tags: ["周末游", "文艺清新", "极致低价"]
+          },
+          {
+            id: 2,
+            city: "重庆",
+            quote: ["巴山夜雨涨秋池，\n何当共剪西窗烛", "山城灯火，\n如梦似幻"],
+            handwrittenNote: "火锅！熊猫！我全要！",
+            departDate: "2024-05-18",
+            departTime: "10:20",
+            returnDate: "2024-05-21",
+            returnTime: "19:40",
+            days: 4,
+            price: 299,
+            originalPrice: 950,
+            isDirect: false,
+            transferInfo: "中转西安 5h 20m",
+            tags: ["美食之都", "极致省钱", "8D 魔幻"]
+          },
+          {
+            id: 3,
+            city: "西安",
+            quote: ["春风得意马蹄疾，\n一日看尽长安花", "长安依旧，\n古韵长存"],
+            handwrittenNote: "梦回大唐，先炫三个肉夹馍！",
+            departDate: "2024-05-20",
+            departTime: "08:15",
+            returnDate: "2024-05-23",
+            returnTime: "22:30",
+            days: 4,
+            price: 450,
+            originalPrice: 1500,
+            isDirect: true,
+            transferInfo: "直飞 2h 10m",
+            tags: ["历史文化", "汉服体验", "学生党必去"]
+          },
+          {
+            id: 4,
+            city: "三亚",
+            quote: ["天涯地角有穷时，\n只有相思无尽处", "椰风海韵，\n海角天涯"],
+            handwrittenNote: "没钱也能躺平！平替版海岛游。",
+            departDate: "2024-06-01",
+            departTime: "06:40",
+            returnDate: "2024-06-05",
+            returnTime: "18:20",
+            days: 5,
+            price: 599,
+            originalPrice: 2100,
+            isDirect: false,
+            transferInfo: "中转广州 6h 15m",
+            tags: ["海边度假", "极致省钱", "反季特惠"]
+          },
+          {
+            id: 5,
+            city: "成都",
+            quote: ["晓看红湿处，\n花重锦官城", "安逸生活，\n就在成都"],
+            handwrittenNote: "去玉林路尽头，坐一坐。",
+            departDate: "2024-05-14",
+            departTime: "14:20",
+            returnDate: "2024-05-17",
+            returnTime: "09:45",
+            days: 4,
+            price: 320,
+            originalPrice: 1100,
+            isDirect: true,
+            transferInfo: "直飞 2h 30m",
+            tags: ["休闲之都", "熊猫基地", "特种兵旅游"]
+          }
+        ];
+
+        const AmbientBackground = () => (
+          <div className="fixed inset-0 -z-10 overflow-hidden bg-[#fff9f2]">
+            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-amber-200/40 blur-[120px]" />
+            <div className="absolute bottom-[10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-orange-200/30 blur-[150px]" />
+            <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-yellow-100/50 blur-[100px]" />
+          </div>
+        );
+
+        const FlightCard = ({ flight, onClick }) => (
+          <div 
+            onClick={() => {
+              console.log('Flight card clicked:', flight.city);
+              onClick(flight);
+            }}
+            className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:translate-y-[-8px] hover:shadow-2xl active:scale-95 h-full"
+          >
+            <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-[2.5rem] p-7 shadow-xl h-full flex flex-col">
+              {/* Poetry Section - Optimized for Typography and Spacing */}
+              <div className="relative w-full h-64 rounded-3xl overflow-hidden mb-6 flex flex-col items-center justify-center bg-gradient-to-br from-amber-100/40 via-orange-100/30 to-yellow-50/40 p-10 border border-white/20">
+                <div className="text-center space-y-6">
+                  {flight.quote.map((line, idx) => (
+                    <p 
+                      key={idx} 
+                      className="font-zhi-mang text-2xl md:text-3xl text-amber-900/90 leading-[1.6] tracking-[0.2em] whitespace-pre-line"
+                    >
+                      {line}
+                    </p>
+                  ))}
+                </div>
+                {/* Floating Handwritten Note */}
+                <div className="absolute -bottom-2 -right-2 transform rotate-[-4deg] bg-white/70 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/50 shadow-sm z-10">
+                  <p className="font-zhi-mang text-xl text-orange-600">
+                    {flight.handwrittenNote}
+                  </p>
+                </div>
+              </div>
+
+              {/* City & Price Info */}
+              <div className="flex justify-between items-start mb-6">
+                <div className="space-y-2">
+                  <h3 className="text-3xl font-black text-gray-800 flex items-center gap-2">
+                    {flight.city}
+                    <Sparkles className="w-6 h-6 text-amber-500 fill-amber-200" />
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {flight.tags.map(tag => (
+                      <span key={tag} className="px-2.5 py-1 rounded-lg bg-amber-100/60 border border-amber-200/40 text-amber-800 text-[10px] font-bold tracking-wider">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-right flex flex-col items-end">
+                  <span className="text-gray-400 line-through text-xs font-medium mb-1 tracking-tighter">¥{flight.originalPrice}</span>
+                  <div className="text-4xl font-black text-orange-600 flex items-baseline leading-none">
+                    <span className="text-lg mr-0.5">¥</span>{flight.price}
+                  </div>
+                </div>
+              </div>
+
+              {/* Info Tags Section */}
+              <div className="mt-auto pt-4 border-t border-white/30 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2.5 bg-white/40 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/50 text-gray-700 shadow-sm">
+                    <Calendar className="w-4 h-4 text-orange-500" />
+                    <span className="text-xs font-bold">{flight.departDate}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 bg-white/40 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/50 text-gray-700 shadow-sm">
+                    <Clock className="w-4 h-4 text-orange-500" />
+                    <span className="text-xs font-bold">{flight.days}天游</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 bg-gray-900/5 backdrop-blur-sm px-5 py-3 rounded-2xl border border-white/60 text-orange-900 font-bold group/btn transition-colors hover:bg-white/60">
+                  <Plane className="w-5 h-5 text-orange-600" />
+                  <span className="text-sm">{flight.transferInfo}</span>
+                  <ChevronRight className="ml-auto w-5 h-5 opacity-40 group-hover/btn:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+        const PriceMonitor = () => {
+          const [submitted, setSubmitted] = useState(false);
+          const handleNotify = (e) => {
+            e.preventDefault();
+            setSubmitted(true);
+            setTimeout(() => setSubmitted(false), 3000);
+          };
+
+          return (
+            <div className="sticky top-24 h-fit bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-400/10 blur-3xl -z-10 group-hover:bg-orange-400/20 transition-colors" />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-orange-100/50 rounded-2xl">
+                  <Bell className="w-6 h-6 text-orange-600" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-gray-800">降价实时监控</h4>
+                  <p className="text-xs text-orange-500 font-medium">没钱也能放肆玩！</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleNotify} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">想飞去哪里？</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-400" />
+                    <input 
+                      type="text" 
+                      placeholder="目的地（如：大理）" 
+                      className="w-full bg-white/50 border border-white/80 focus:border-orange-300 focus:ring-4 focus:ring-orange-100 rounded-2xl py-3 pl-11 pr-4 outline-none transition-all placeholder:text-gray-400"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">心理底价 (¥)</label>
+                  <input type="number" placeholder="如：500" className="w-full bg-white/50 border border-white/80 focus:border-orange-300 focus:ring-4 focus:ring-orange-100 rounded-2xl py-3 px-4 outline-none transition-all" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-500 ml-2 uppercase tracking-wider">通知邮箱</label>
+                  <input type="email" placeholder="yourname@email.com" className="w-full bg-white/50 border border-white/80 focus:border-orange-300 focus:ring-4 focus:ring-orange-100 rounded-2xl py-3 px-4 outline-none transition-all" />
+                </div>
+                <button type="submit" className={`w-full py-4 rounded-2xl font-bold text-white shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 ${submitted ? 'bg-green-500 shadow-green-200' : 'bg-gradient-to-r from-orange-500 to-amber-500 shadow-orange-200 hover:shadow-orange-300 hover:translate-y-[-2px]'}`}>
+                  {submitted ? <><Sparkles className="w-5 h-5" /><span>监控已开启！</span></> : <><PartyPopper className="w-5 h-5" /><span>开启捡漏提醒</span></>}
+                </button>
+              </form>
+              <div className="mt-6 p-4 rounded-2xl bg-amber-50/50 border border-amber-100/50 text-xs text-amber-800 leading-relaxed">
+                💡 提示：我们每天扫描超过 1000+ 航司，确保你能在第一时间抢到地板价。
+              </div>
+            </div>
+          );
+        };
+
+        const BookingModal = ({ flight, onClose }) => {
+          if (!flight) return null;
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
+              <div className="relative w-full max-w-lg bg-white/80 backdrop-blur-2xl border border-white rounded-[3rem] shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in duration-300">
+                <div className="relative h-48 bg-gradient-to-br from-amber-200 via-orange-200 to-yellow-100 p-8 flex flex-col justify-end">
+                  <button onClick={onClose} className="absolute top-6 right-6 p-2 rounded-full bg-white/40 hover:bg-white/60 transition-colors text-gray-800"><X className="w-6 h-6" /></button>
+                  <h2 className="text-4xl font-black text-gray-900 mb-2 flex items-center gap-3">{flight.city} <Sparkles className="w-8 h-8 text-orange-500" /></h2>
+                  <p className="font-zhi-mang text-2xl text-orange-800/80">{flight.handwrittenNote}</p>
+                </div>
+                <div className="p-8 space-y-8">
+                  <div className="flex justify-between items-center">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-gray-800">{flight.departTime}</div>
+                      <div className="text-sm text-gray-500">{flight.departDate}</div>
+                      <div className="text-xs font-semibold text-orange-600 mt-1">出发</div>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center px-6">
+                      <div className="w-full h-[2px] bg-gradient-to-r from-transparent via-orange-200 to-transparent relative">
+                        <Plane className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-orange-400 rotate-90" />
+                      </div>
+                      <div className="text-[10px] text-gray-400 mt-4 uppercase tracking-[0.2em]">{flight.transferInfo}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-gray-800">{flight.returnTime}</div>
+                      <div className="text-sm text-gray-500">{flight.returnDate}</div>
+                      <div className="text-xs font-semibold text-orange-600 mt-1">返回</div>
+                    </div>
+                  </div>
+                  <div className="bg-amber-50/50 rounded-3xl p-6 border border-amber-100">
+                    <div className="flex justify-between items-center mb-4"><span className="text-gray-600 font-medium">特价详情</span><span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-lg">限时特惠</span></div>
+                    <div className="flex justify-between items-end">
+                      <div className="space-y-1"><div className="text-sm text-gray-400 line-through">原价 ¥{flight.originalPrice}</div><div className="text-4xl font-black text-orange-600">¥{flight.price}</div></div>
+                      <div className="text-right text-xs text-amber-800 bg-amber-200/30 px-3 py-2 rounded-xl border border-amber-200/50">已为您节省 ¥{flight.originalPrice - flight.price}</div>
+                    </div>
+                  </div>
+                  <button className="w-full py-5 rounded-[2rem] bg-gray-900 text-white font-bold text-xl shadow-xl hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3">
+                    <span>去官方渠道下单</span><ArrowRight className="w-6 h-6" />
+                  </button>
+                  <p className="text-center text-[10px] text-gray-400">* 价格可能随时间波动，请以航司官网最终价格为准。</p>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        function SuixinfeiApp() {
+          const [activeTab, setActiveTab] = useState('cheap');
+          const [selectedFlight, setSelectedFlight] = useState(null);
+          const [searchQuery, setSearchQuery] = useState('');
+
+          // 挂载成功后移除加载遮罩
+          useEffect(() => {
+            const timer = setTimeout(() => {
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => overlay.style.display = 'none', 500);
+                }
+            }, 800);
+            return () => clearTimeout(timer);
+          }, []);
+
+          const handleSearch = () => {
+            alert(`正在为您搜索“${searchQuery || '全国'}”的灵感机票... (模拟搜索)`);
+          };
+
+          const filteredFlights = MOCK_FLIGHTS.filter(f => {
+            if (activeTab === 'direct' && !f.isDirect) return false;
+            if (searchQuery && !f.city.includes(searchQuery)) return false;
+            return true;
+          });
+
+          return (
+            <div className="min-h-screen text-gray-900 selection:bg-orange-200 font-sans">
+              <AmbientBackground />
+              <nav className="fixed top-0 inset-x-0 z-40 px-6 py-4">
+                <div className="max-w-7xl mx-auto flex justify-between items-center bg-white/30 backdrop-blur-xl border border-white/40 px-8 py-4 rounded-[2rem] shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-orange-500 p-2 rounded-xl shadow-lg shadow-orange-200"><Palmtree className="text-white w-6 h-6" /></div>
+                    <div><h1 className="text-2xl font-black tracking-tight text-gray-900">随心飞</h1><p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest leading-none">Suixinfei</p></div>
+                  </div>
+                  <div className="hidden md:flex items-center gap-8 font-semibold text-sm text-gray-600">
+                    <a href="#" onClick={(e) => {e.preventDefault(); alert('正在获取实时机票灵感...')}} className="hover:text-orange-500 transition-colors">机票发现</a>
+                    <a href="#" onClick={(e) => {e.preventDefault(); alert('获取降价榜单中...')}} className="hover:text-orange-500 transition-colors">降价榜单</a>
+                    <a href="#" onClick={(e) => {e.preventDefault(); alert('正在寻找旅行灵感...')}} className="hover:text-orange-500 transition-colors">旅行灵感</a>
+                  </div>
+                  <button onClick={() => alert('已成功收藏该航班（模拟）')} className="flex items-center gap-2 bg-white/60 hover:bg-white/80 transition-all px-5 py-2.5 rounded-2xl border border-white/60 shadow-sm group">
+                    <Heart className="w-4 h-4 text-orange-500 group-hover:fill-orange-500 transition-all" /><span className="text-sm font-bold">收藏夹</span>
+                  </button>
+                </div>
+              </nav>
+
+              <section className="pt-40 pb-20 px-6">
+                <div className="max-w-7xl mx-auto text-center">
+                  <div className="inline-flex items-center gap-2 bg-amber-100/50 backdrop-blur-sm px-4 py-2 rounded-full border border-amber-200/50 text-amber-800 text-sm font-bold mb-8 animate-bounce">
+                    <PartyPopper className="w-4 h-4" /><span>全网机票，实时地板价</span>
+                  </div>
+                  <h2 className="text-6xl md:text-8xl font-zhi-mang text-gray-900 mb-6 leading-tight">
+                    没钱也能 <span className="text-orange-600 relative inline-block">放肆玩！<svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 25 0 50 5 T 100 5" fill="none" stroke="#fb923c" strokeWidth="4" /></svg></span>
+                  </h2>
+                  <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-12 font-medium">告别昂贵的订票流程，我们只为你寻找那些隐藏在角落的旅行惊喜。</p>
+                  <div className="max-w-4xl mx-auto bg-white/40 backdrop-blur-2xl border border-white/60 p-3 rounded-[3rem] shadow-2xl flex flex-col md:flex-row items-center gap-3">
+                    <div className="flex-1 w-full flex items-center gap-4 bg-white/60 rounded-[2.5rem] px-8 py-4 border border-white/80">
+                      <Search className="w-6 h-6 text-orange-400" />
+                      <input type="text" placeholder="你想去哪里？(如：重庆)" className="w-full bg-transparent outline-none text-lg font-medium placeholder:text-gray-400" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                    </div>
+                    <div className="hidden md:flex items-center gap-4 bg-white/60 rounded-[2.5rem] px-8 py-4 border border-white/80">
+                      <Calendar className="w-6 h-6 text-orange-400" /><span className="text-lg font-medium text-gray-600 whitespace-nowrap">未来 14 天</span>
+                    </div>
+                    <button onClick={handleSearch} className="w-full md:w-auto bg-gray-900 hover:bg-black text-white px-10 py-5 rounded-[2.5rem] font-bold text-lg shadow-xl shadow-gray-200 transition-all active:scale-95 flex items-center justify-center gap-3">搜索灵感</button>
+                  </div>
+                </div>
+              </section>
+
+              <main className="max-w-7xl mx-auto px-6 pb-40">
+                <div className="flex flex-col lg:flex-row gap-12">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-4 mb-10 overflow-x-auto pb-2">
+                      <button onClick={() => setActiveTab('cheap')} className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all whitespace-nowrap ${activeTab === 'cheap' ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' : 'bg-white/40 backdrop-blur-md text-gray-600 border border-white/60 hover:bg-white/60'}`}><Sparkles className="w-5 h-5" />极致省钱 (含中转)</button>
+                      <button onClick={() => setActiveTab('direct')} className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all whitespace-nowrap ${activeTab === 'direct' ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' : 'bg-white/40 backdrop-blur-md text-gray-600 border border-white/60 hover:bg-white/60'}`}><Plane className="w-5 h-5" />直飞省时</button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {filteredFlights.length > 0 ? filteredFlights.map(flight => <FlightCard key={flight.id} flight={flight} onClick={setSelectedFlight} />) : <div className="col-span-full py-20 text-center bg-white/20 backdrop-blur-md rounded-[3rem] border border-dashed border-gray-300"><div className="p-6 bg-white/40 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6"><MonitorPlay className="w-10 h-10 text-gray-400" /></div><h3 className="text-2xl font-bold text-gray-500">暂时没有找到符合条件的特价机票</h3><p className="text-gray-400 mt-2">试试搜索其他城市，或者切换分类标签吧！</p></div>}
+                    </div>
+                  </div>
+                  <aside className="lg:w-[400px]">
+                    <PriceMonitor />
+                    <div className="mt-8 p-8 bg-gradient-to-br from-gray-900 to-gray-800 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
+                      <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl transition-transform group-hover:scale-150 duration-700" />
+                      <div className="relative z-10">
+                        <h5 className="text-xl font-bold mb-3 flex items-center gap-2"><Heart className="w-5 h-5 text-orange-500 fill-orange-500" />学生专属优惠</h5>
+                        <p className="text-sm text-gray-300 leading-relaxed mb-6">认证学生身份，部分航线最高可再减 <span className="text-orange-400 font-bold">¥50</span>，支持分期付款。</p>
+                        <button className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl font-bold text-sm transition-all">立即认证</button>
+                      </div>
+                    </div>
+                  </aside>
+                </div>
+              </main>
+
+              <BookingModal flight={selectedFlight} onClose={() => setSelectedFlight(null)} />
+
+              <footer className="bg-white/30 backdrop-blur-xl border-t border-white/40 py-12">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                  <div className="flex items-center justify-center gap-3 mb-6"><Palmtree className="text-orange-500 w-8 h-8" /><h1 className="text-3xl font-black tracking-tight text-gray-900">随心飞</h1></div>
+                  <p className="text-gray-500 text-sm mb-8">© 2024 Suixinfei - 发现低价旅行灵感的极致选择</p>
+                </div>
+              </footer>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SuixinfeiApp />);
+    </script>
+</body>
+</html>
